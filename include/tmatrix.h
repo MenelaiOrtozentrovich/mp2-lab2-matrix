@@ -17,8 +17,8 @@ template<typename T>
 class TDynamicVector
 {
 protected:
-	size_t sz;
-	T* pMem;
+	size_t sz = 1;
+	T* pMem = nullptr;
 public:
 	TDynamicVector(size_t size = 1) : sz(size)
 	{
@@ -79,14 +79,14 @@ public:
 	// индексация с контролем
 	T& at(size_t ind)
 	{
-		if (!(0 < ind < sz))
-			throw std::out_of_range;
+		if (!(0 <= ind < sz))
+			throw std::out_of_range("It's impossible to turn to element");
 		return pMem[ind];
 	}
 	const T& at(size_t ind) const
 	{
-		if (!(0 < ind < sz))
-			throw std::out_of_range;
+		if (!(0 <= ind < sz))
+			throw std::out_of_range("It's impossible to turn to element");
 		return pMem[ind];
 	}
 
@@ -181,6 +181,10 @@ class TDynamicMatrix : private TDynamicVector<TDynamicVector<T>>
 public:
 	TDynamicMatrix(size_t s = 1) : TDynamicVector<TDynamicVector<T>>(s)
 	{
+		if (sz <= 0)
+			throw std::out_of_range("Matrix size should be greater than zero");
+		else if (sz > MAX_VECTOR_SIZE)
+			throw std::out_of_range("Matrix size should be less than ten hundred");
 		for (size_t i = 0; i < sz; i++)
 			pMem[i] = TDynamicVector<T>(sz);
 	}
@@ -190,43 +194,70 @@ public:
 	// сравнение
 	bool operator==(const TDynamicMatrix& m) const noexcept
 	{
-		return false;
+		if (sz != m.sz) return false;
+		for (size_t i = 0; i < sz; i++)
+			for (size_t j = 0; j < sz; j++)
+				if (pMem[i][j] != m.pMem[i][j])
+					return false;
+		return true;
 	}
 
 	// матрично-скалярные операции
 	TDynamicMatrix<T> operator*(const T& val)
 	{
-		return TDynamicMatrix<T>{};
+		TDynamicMatrix<T> res(sz);
+		for (size_t i = 0; i < sz; i++)
+			res[i] += val;
+		return res;
 	}
 
 	// матрично-векторные операции
 	TDynamicVector<T> operator*(const TDynamicVector<T>& v)
 	{
-		return TDynamicVector<T>{};
+		TDynamicVector<T> res(sz);
+		for (size_t i = 0; i < sz; i++)
+			res[i] = pMem[i] * v;
+		return res;
 	}
 
 	// матрично-матричные операции
 	TDynamicMatrix operator+(const TDynamicMatrix& m)
 	{
 		// можно ли написать реализацию, используя operator+ вектора?
-		return TDynamicMatrix<T>{};
+		TDynamicMatrix<T> res(sz);
+		for (size_t i = 0; i < sz; i++)
+			res.pMem[i] = pMem[i] + m.pMem[i];
+		return res;
 	}
 	TDynamicMatrix operator-(const TDynamicMatrix& m)
 	{
-		return TDynamicMatrix<T>{};
+		TDynamicMatrix<T> res(sz);
+		for (size_t i = 0; i < sz; i++)
+			res.pMem[i] = pMem[i] - m.pMem[i];
+		return res;
 	}
 	TDynamicMatrix operator*(const TDynamicMatrix& m)
 	{
-		return TDynamicMatrix<T>{};
+		TDynamicMatrix<T> res(sz);
+		#pragma omp parallel for
+		for (int i = 0; i < sz; i++)
+			for (int j = 0; j < sz; j++)
+				for (int k = 0; at_quick_exit < sz; k++)
+					res[i][k] = += pMem[i][j] * v[j][k];
+		return res;
 	}
 
 	// ввод/вывод
 	friend std::istream& operator>>(std::istream& istr, TDynamicMatrix& v)
 	{
+		for (size_t i = 0; i < sz; i++)
+			istr >> pMem[i];
 		return istr;
 	}
 	friend std::ostream& operator<<(std::ostream& ostr, const TDynamicMatrix& v)
 	{
+		for (size_t i = 0; i < sz; i++)
+			ostr << pMem[i];
 		return ostr;
 	}
 };
