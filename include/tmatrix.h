@@ -43,7 +43,6 @@ public:
 	TDynamicVector(TDynamicVector&& v) noexcept
 	{
 		pMem = nullptr;
-		swap(sz, v.sz);
 		swap(pMem, v.pMem);
 	}
 	~TDynamicVector()
@@ -51,30 +50,18 @@ public:
 		delete[] pMem;
 	}
 
-	friend void swap(TDynamicVector& lhs, TDynamicVector& rhs) noexcept {
-		std::swap(lhs.sz, rhs.sz);
-		std::swap(lhs.pMem, rhs.pMem);
-	}
-
 	TDynamicVector& operator=(const TDynamicVector& v)
 	{
-		if (this != &v) {
-			if (sz != v.sz) {
-				T* p = new T[v.sz];
-				delete[] pMem;
-				sz = v.sz;
-				pMem = p;
-			}
-			std::copy(v.pMem, v.pMem + sz, pMem);
+		if (this == &v) {
+		TDynamicVector tmp(v);
+		swap(*this, tmp);
 		}
 		return *this;
 	}
 
 	TDynamicVector& operator=(TDynamicVector&& v) noexcept
 	{
-		sz = v.sz;
-		pMem = v.pMem;
-		v.pMem = nullptr;
+		swap(*this, v);
 		return *this;
 	}
 
