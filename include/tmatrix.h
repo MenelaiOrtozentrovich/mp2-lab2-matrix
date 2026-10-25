@@ -107,29 +107,47 @@ public:
 	// скалярные операции
 	TDynamicVector operator+(T val)
 	{
-		return TDynamicVector{};
+		TDynamicVector tmp(sz);
+		for (size_t i = 0; i < sz; i++)
+			tmp.pMem[i] = pMem[i] + val;
+		return tmp;
 	}
 	TDynamicVector operator-(double val)
 	{
-		return TDynamicVector{};
+		TDynamicVector tmp(sz);
+		for (size_t i = 0; i < sz; i++)
+			tmp.pMem[i] = pMem[i] - val;
+		return tmp;
 	}
 	TDynamicVector operator*(double val)
 	{
-		return TDynamicVector{};
+		TDynamicVector tmp(sz);
+		for (size_t i = 0; i < sz; i++)
+			tmp.pMem[i] = pMem[i] * val;
+		return tmp;
 	}
 
 	// векторные операции
 	TDynamicVector operator+(const TDynamicVector& v)
 	{
-		return TDynamicVector{};
+		TDynamicVector tmp(sz);
+		for (size_t i = 0; i < sz; i++)
+			tmp.pMem[i] = pMem[i] + v.pMem[i];
+		return tmp;
 	}
 	TDynamicVector operator-(const TDynamicVector& v)
 	{
-		return TDynamicVector{};
+		TDynamicVector tmp(sz);
+		for (size_t i = 0; i < sz; i++)
+			tmp.pMem[i] = pMem[i] - v.pMem[i];
+		return tmp;
 	}
 	T operator*(const TDynamicVector& v) //noexcept(noexcept(T()))
 	{
-		return T{};
+		T res{};
+		for (size_t i = 0; i < sz; i++)
+			res += pMem[i] * v.pMem[i];
+		return res;
 	}
 
 	friend void swap(TDynamicVector& lhs, TDynamicVector& rhs) noexcept

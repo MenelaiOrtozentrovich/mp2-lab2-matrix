@@ -153,7 +153,7 @@ TEST(TDynamicVector, can_read_vector)
 {
   TDynamicVector<int> v(5);
   TDynamicVector<int> expected(5);
-  for (int i = 0; i < 5; i++) expected[i] = i;
+  for (int i = 0; i < 5; i++) expected[i] = i + 1;
   
   std::stringstream sstr;
   sstr << "1 2 3 4 5\n";
@@ -164,8 +164,8 @@ TEST(TDynamicVector, can_read_vector)
 
 TEST(TDynamicVector, can_write_vector)
 {
-  TDynamicVector<int> v;
-  for (int i = 0; i < 5; i++) v[i] = i;
+  TDynamicVector<int> v(5);
+  for (int i = 0; i < 5; i++) v[i] = i + 1;
   std::string expected = "1 2 3 4 5 ";
   
   std::stringstream sstr;

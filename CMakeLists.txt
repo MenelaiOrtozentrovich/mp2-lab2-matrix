@@ -16,10 +16,7 @@ set(MP2_CUSTOM_PROJECT "${PROJECT_NAME}")
 set(MP2_INCLUDES "${PROJECT_SOURCE_DIR}/include")
 
 add_subdirectory(include)
-
-if(BUILD_SAMPLES)
-	add_subdirectory(samples)
-endif()
+add_subdirectory(samples)
 
 if(BUILD_TESTING)
     # add googletest, version 1.18.0
