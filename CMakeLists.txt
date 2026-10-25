@@ -18,14 +18,10 @@ set(MP2_INCLUDES "${PROJECT_SOURCE_DIR}/include")
 add_subdirectory(include)
 add_subdirectory(samples)
 
-if(BUILD_TESTING)
-    # add googletest, version 1.18.0
-    add_subdirectory("${PROJECT_SOURCE_DIR}/gtest/googletest-1.18.0")
-    set(MP2_GTEST_INCLUDES "${gtest_SOURCE_DIR}/include/gtest")
-
-	add_subdirectory(test)
-endif()
-
+# add googletest, version 1.18.0
+add_subdirectory("${PROJECT_SOURCE_DIR}/gtest/googletest-1.18.0")
+set(MP2_GTEST_INCLUDES "${gtest_SOURCE_DIR}/include/gtest")
+add_subdirectory(test)
 
 # REPORT
 message( STATUS "")
