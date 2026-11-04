@@ -256,12 +256,12 @@ public:
 		return *this;
 	}
 	// матрично-векторные операции
-	T operator*(const TDynamicVector<T>& v) const
+	TDynamicVector<T> operator*(const TDynamicVector<T>& v) const
 	{
 		if (sz == v.sz) {
-			T res{};
+			TDynamicVector<T> res{};
 			for (size_t i = 0; i < sz; i++)
-				res += pMem[i] * v;
+				res[i] += pMem[i] * v;
 			return res;
 		}
 		else
@@ -301,7 +301,8 @@ public:
 
 			TDynamicMatrix<T> res(sz);
 #pragma omp parallel for
-			for (size_t i = 0; i < sz; i++) //возможно нужен знаковый тип?
+
+			for (size_t i = 0; i < sz; i++) //возможно нужен знаковый тип? 
 				for (size_t k = 0; k < sz; k++) {
 					T sum = T(0);
 					for (size_t j = 0; j < sz; j++)
@@ -349,7 +350,7 @@ template<class T> class SparseMatrixCoo {
 	size_t row, col;
 public:
 	SparseMatrixCoo(int rows, int cols) {
-		if (rows >= 0 || cols >= 0) {
+		if (rows >= 0 && cols >= 0) {
 			row = static_cast<size_t>(rows);
 			col = static_cast<size_t>(cols);
 		}
@@ -374,7 +375,7 @@ public:
 	}
 	SparseMatrixCoo(const TDynamicMatrix<T>& m, int rows, int cols) : row(rows), col(cols) {
 
-		if (rows < 0 && cols < 0)
+		if (rows < 0 || cols < 0)
 			throw std::out_of_range("Sparse matrix size should be greater than zero");
 		else {
 			for (size_t r = 0; r < row; r++) {
@@ -388,9 +389,9 @@ public:
 			}
 		}
 	}
-	size_t rows() { return row; } const
-	size_t cols() { return col; } const
-	size_t values() { return data.size(); } const
+	size_t rows() const { return row; }
+	size_t cols() const { return col; }
+	size_t values() const { return data.size(); }
 
 	/*
 	* можно было попробовать operator[] с двумя аргументами,
@@ -464,11 +465,11 @@ public:
 		}
 	}
 	SparseMatrixCoo operator+(const SparseMatrixCoo& sm) {
-		TDynamicMatrix<T> tmp1(static_cast<std::max(row, col)>);
+		TDynamicMatrix<T> tmp1(static_cast<size_t>(std::max(row, col)));
 		for (size_t i = 0; i < data.size(); i++) {
 			tmp1[rowInd[i]][colInd[i]] = data[i];
 		}
-		TDynamicMatrix<T> tmp2(static_cast<std::max(row, col)>);
+		TDynamicMatrix<T> tmp2(static_cast<size_t>(std::max(row, col)));
 		for (size_t i = 0; i < sm.data.size(); i++) {
 			tmp2[sm.rowInd[i]][sm.colInd[i]] = sm.data[i];
 		}
@@ -477,7 +478,7 @@ public:
 	}
 	friend std::ostream& operator<<(std::ostream& ostr, const SparseMatrixCoo& sm) {
 		int val = sm.data.size();
-		for (int i = 0; i < sm.val; i++) {
+		for (int i = 0; i < val; i++) {
 			for (size_t r = 0; r < sm.rowInd[i]; r++) {
 				for (size_t c = 0; c < sm.colInd[i]; c++) {
 					ostr << T(0) << ' ';
