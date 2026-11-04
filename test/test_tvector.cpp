@@ -26,30 +26,34 @@ TEST(TDynamicVector, can_create_copied_vector)
 
 TEST(TDynamicVector, can_move_vector_using_move_constructor)
 {
-
-	ADD_FAILURE();
+	ASSERT_NO_THROW(TDynamicVector<int> v2(TDynamicVector<int>(10)));
 }
 
 TEST(TDynamicVector, can_move_vector_using_move_operator)
 {
-	ADD_FAILURE();
+	ASSERT_NO_THROW(TDynamicVector<int> v2 = TDynamicVector<int>(10));
 }
 
 TEST(TDynamicVector, copied_vector_is_equal_to_source_one)
 {
-	ADD_FAILURE();
+	TDynamicVector<int> v(10);
+	TDynamicVector<int> v1(v);
+	EXPECT_EQ(v, v1);
 }
 
 TEST(TDynamicVector, copied_vector_has_its_own_memory)
 {
-	ADD_FAILURE();
+	TDynamicVector<int> v(10);
+	TDynamicVector<int> v1(v);
+	v = v + 2;
+	EXPECT_NE(v, v1);
 }
 
 TEST(TDynamicVector, can_get_size)
 {
 	TDynamicVector<int> v(4);
 
-	EXPECT_EQ(4, v.size());
+	EXPECT_EQ(static_cast<size_t>(4), v.size());
 }
 
 TEST(TDynamicVector, can_set_and_get_element)
@@ -57,7 +61,7 @@ TEST(TDynamicVector, can_set_and_get_element)
 	TDynamicVector<int> v(4);
 	v[0] = 4;
 
-	EXPECT_EQ(4, v[0]);
+	EXPECT_EQ(static_cast<int>(4), v[0]);
 }
 
 TEST(TDynamicVector, throws_when_set_element_with_negative_index)
