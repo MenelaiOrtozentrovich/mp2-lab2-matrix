@@ -8,7 +8,7 @@
 
 #include <iostream>
 #include <vector>
-
+template<class T> class SparseMatrixCoo;
 const static int MAX_VECTOR_SIZE = 100'000'000;
 const static int MAX_MATRIX_SIZE = 10'000;
 // Динамический вектор - 
@@ -20,23 +20,25 @@ protected:
 	size_t sz = 1;
 	T* pMem = nullptr;
 public:
-	TDynamicVector(int size = 1)
+	TDynamicVector(int size = 1, T value = T(0)) : sz(static_cast<size_t>(size))
 	{
-		if (sz <= 0)
+		if (size <= 0)
 			throw std::out_of_range("Vector size should be greater than zero");
-		else if (sz > MAX_VECTOR_SIZE)
+		else if (size > MAX_VECTOR_SIZE)
 			throw std::out_of_range("Vector size should be less than one hundred million");
-		sz = static_cast<size_t>(size);
 		pMem = new T[sz]();// {}; // У типа T д.б. констуктор по умолчанию
+		if (value != T(0)) {
+			for (int i = 0; i < sz; i++)
+				pMem[i] = value;
+		}
 	}
-	TDynamicVector(T* arr, int s)
+	TDynamicVector(T* arr, int s) :sz(static_cast<size_t>(s))
 	{
 		assert(arr != nullptr && "TDynamicVector requires non-nullptr argument");
-		if (sz <= 0)
+		if (s <= 0)
 			throw std::out_of_range("Vector size should be greater than zero");
-		else if (sz > MAX_VECTOR_SIZE)
+		else if (s > MAX_VECTOR_SIZE)
 			throw std::out_of_range("Vector size should be less than one hundred million");
-		sz = static_cast<size_t>(s);
 		pMem = new T[sz];
 		std::copy(arr, arr + sz, pMem);
 	}
@@ -51,11 +53,9 @@ public:
 		std::swap(lhs.sz, rhs.sz);
 		std::swap(lhs.pMem, rhs.pMem);
 	}
-	TDynamicVector(TDynamicVector&& v) noexcept
+	TDynamicVector(TDynamicVector&& v) noexcept : sz(v.sz), pMem(v.pMem)
 	{
-		pMem = nullptr;
-		sz = 0;
-		swap(*this, v);
+		v.pMem = nullptr;
 	}
 
 	~TDynamicVector() { delete[] pMem; }
@@ -94,13 +94,13 @@ public:
 	}
 	const T& at(int ind) const
 	{
-		if (!(0 <= ind && ind < sz))
+		if (!(0 <= ind && static_cast<size_t>(ind) < sz))
 			throw std::out_of_range("It's impossible to turn to element");
-		return pMem[static_cast<size_t<ind>];
+		return pMem[static_cast<size_t>(ind)];
 	}
 
 	// сравнение
-	bool operator==(const TDynamicVector& v) const noexcept
+	bool operator==(const TDynamicVector& v) const
 	{
 		if (sz != v.sz)	return false;
 		for (size_t i = 0; i < sz; i++) {
@@ -108,13 +108,13 @@ public:
 		}
 		return true;
 	}
-	bool operator!=(const TDynamicVector& v) const noexcept
+	bool operator!=(const TDynamicVector& v) const
 	{
 		return !(this->operator==(v));
 	}
 
 	// скалярные операции
-	TDynamicVector operator+(T val)
+	TDynamicVector operator+(T val) const
 	{
 		TDynamicVector tmp(sz);
 		for (size_t i = 0; i < sz; i++)
@@ -126,7 +126,7 @@ public:
 			pMem[i] += val;
 		return *this;
 	}
-	TDynamicVector operator-(double val)
+	TDynamicVector operator-(T val) const
 	{
 		TDynamicVector tmp(sz);
 		for (size_t i = 0; i < sz; i++)
@@ -138,7 +138,7 @@ public:
 			pMem[i] -= val;
 		return *this;
 	}
-	TDynamicVector operator*(double val)
+	TDynamicVector operator*(T val) const
 	{
 		TDynamicVector tmp(sz);
 		for (size_t i = 0; i < sz; i++)
@@ -151,7 +151,7 @@ public:
 		return *this;
 	}
 	// векторные операции
-	TDynamicVector operator+(const TDynamicVector& v)
+	TDynamicVector operator+(const TDynamicVector& v) const
 	{
 		TDynamicVector tmp(sz);
 		for (size_t i = 0; i < sz; i++)
@@ -163,7 +163,7 @@ public:
 			pMem[i] += v.pMem[i];
 		return *this;
 	}
-	TDynamicVector operator-(const TDynamicVector& v)
+	TDynamicVector operator-(const TDynamicVector& v) const
 	{
 		TDynamicVector tmp(sz);
 		for (size_t i = 0; i < sz; i++)
@@ -175,12 +175,16 @@ public:
 			pMem[i] -= v.pMem[i];
 		return *this;
 	}
-	T operator*(const TDynamicVector& v) //noexcept(noexcept(T()))
+	T operator*(const TDynamicVector& v) const//noexcept(noexcept(T()))
 	{
-		T res{};
-		for (size_t i = 0; i < sz; i++)
-			res += pMem[i] * v.pMem[i];
-		return res;
+		if (sz == v.sz) {
+			T res{};
+			for (size_t i = 0; i < sz; i++)
+				res += pMem[i] * v.pMem[i];
+			return res;
+		}
+		else
+			throw std::invalid_argument("Size mismatch during multiplication");
 	}
 
 	// ввод/вывод
@@ -206,24 +210,16 @@ class TDynamicMatrix : private TDynamicVector<TDynamicVector<T>>
 	using TDynamicVector<TDynamicVector<T>>::pMem;
 	using TDynamicVector<TDynamicVector<T>>::sz;
 public:
-	TDynamicMatrix(int s = 1) : TDynamicVector<TDynamicVector<T>>(s)
+	TDynamicMatrix(int s = 1) : TDynamicVector<TDynamicVector<T>> (s, TDynamicVector<T>(s))
 	{
-		if (sz <= 0)
+		if (s <= 0)
 			throw std::out_of_range("Matrix size should be greater than zero");
-		else if (sz > MAX_MATRIX_SIZE)
+		else if (s > MAX_MATRIX_SIZE)
 			throw std::out_of_range("Matrix size should be less than ten hundred");
-		for (size_t i = 0; i < sz; i++)
-			pMem[i] = TDynamicVector<T>(static_cact<size_t>(sz));
+		//for (size_t i = 0; i < s; i++)
+		//	pMem[i] = TDynamicVector<T>(static_cast<size_t>(sz));
 	}
-	friend TDynamicMatrix(const SparseMatrixCoo<T>& sm) : TDynamicVector<TDynamicVector<T>>(std::max(sm.row, sm.col)) {
-		size_t row = sm.row, col = sm.col;
-		;
-		for (size_t i = 0; i < sz; i++)
-			pMem[i] = TDynamicVector<T>(sz);
-		for (size_t i = 0; i < row; i++) {
-			pMem[sm.rowInd[i]][sm.colInd[i]] = sm.data[i];
-		}
-	}
+
 	using TDynamicVector<TDynamicVector<T>>::operator[];
 
 	// сравнение
@@ -246,29 +242,33 @@ public:
 	}
 
 	// матрично-скалярные операции
-	TDynamicMatrix<T> operator*(const T& val)
+	TDynamicMatrix<T> operator*(const T& val) const
 	{
 		TDynamicMatrix<T> res(sz);
 		for (size_t i = 0; i < sz; i++)
-			res[i] += val;
+			res[i] *= val;
 		return res;
 	}
 	TDynamicMatrix<T>& operator*=(const T& val)
 	{
 		for (size_t i = 0; i < sz; i++)
-			*this[i] += val;
+			*this[i] *= val;
 		return *this;
 	}
 	// матрично-векторные операции
-	TDynamicVector<T> operator*(const TDynamicVector<T>& v)
+	T operator*(const TDynamicVector<T>& v) const
 	{
-		TDynamicVector<T> res(sz);
-		for (size_t i = 0; i < sz; i++)
-			res[i] = pMem[i] * v;
-		return res;
+		if (sz == v.sz) {
+			T res{};
+			for (size_t i = 0; i < sz; i++)
+				res += pMem[i] * v;
+			return res;
+		}
+		else
+			throw std::invalid_argument("Size mismatch during multiplication");
 	}
 	// матрично-матричные операции
-	TDynamicMatrix operator+(const TDynamicMatrix& m)
+	TDynamicMatrix operator+(const TDynamicMatrix& m) const
 	{
 		// можно ли написать реализацию, используя operator+ вектора?
 		TDynamicMatrix<T> res(sz);
@@ -282,7 +282,7 @@ public:
 			pMem[i] += m.pMem[i];
 		return *this;
 	}
-	TDynamicMatrix operator-(const TDynamicMatrix& m)
+	TDynamicMatrix operator-(const TDynamicMatrix& m) const
 	{
 		TDynamicMatrix<T> res(sz);
 		for (size_t i = 0; i < sz; i++)
@@ -295,15 +295,23 @@ public:
 			pMem[i] -= m.pMem[i];
 		return *this;
 	}
-	TDynamicMatrix operator*(const TDynamicMatrix& m)
+	TDynamicMatrix operator*(const TDynamicMatrix& m) const
 	{
-		TDynamicMatrix<T> res(sz);
-		#pragma omp parallel for
-		for (int i = 0; i < sz; i++)
-			for (size_t j = 0; j < sz; j++)
-				for (size_t k = 0; k < sz; k++)
-					res[i][k] += pMem[i][j] * m[j][k];
-		return res;
+		if (sz == m.sz) {
+
+			TDynamicMatrix<T> res(sz);
+#pragma omp parallel for
+			for (size_t i = 0; i < sz; i++) //возможно нужен знаковый тип?
+				for (size_t k = 0; k < sz; k++) {
+					T sum = T(0);
+					for (size_t j = 0; j < sz; j++)
+						sum += pMem[i][j] * m[j][k]; //оптимизация обращения к памяти
+					res[i][k] = sum;
+				}
+			return res;
+		}
+		else
+			throw std::invalid_argument("Size mismatch during multiplication");
 	}
 
 	// ввод/вывод
@@ -319,7 +327,20 @@ public:
 			ostr << m.pMem[i];
 		return ostr;
 	}
+
+	//friend TDynamicMatrix(const SparseMatrixCoo<T>& sm);
 };
+
+//template<class T>
+//TDynamicMatrix::TDynamicMatrix(const SparseMatrixCoo<T>& sm) : TDynamicVector<TDynamicVector<T>>(std::max(sm.row, sm.col)) {
+//	size_t row = sm.row, col = sm.col;
+//	;
+//	for (size_t i = 0; i < sz; i++)
+//		pMem[i] = TDynamicVector<T>(sz);
+//	for (size_t i = 0; i < row; i++) {
+//		pMem[sm.rowInd[i]][sm.colInd[i]] = sm.data[i];
+//	}
+//}
 
 template<class T> class SparseMatrixCoo {
 	std::vector<T> data;
@@ -328,18 +349,18 @@ template<class T> class SparseMatrixCoo {
 	size_t row, col;
 public:
 	SparseMatrixCoo(int rows, int cols) {
-		if (rows >= 0 && cols >= 0) {
+		if (rows >= 0 || cols >= 0) {
 			row = static_cast<size_t>(rows);
 			col = static_cast<size_t>(cols);
 		}
-		else
+		else 
 			throw std::out_of_range("Sparse matrix size should be greater than zero");
 	}
-	SparseMatrix(const TDynamicMatrix& m, int rows = m.size(), int cols = m.size()) : row(rows), col(cols) {
+	SparseMatrixCoo(const TDynamicMatrix<T>& m) : row(m.size()), col(m.size()) {
+		
 		if (rows < 0 && cols < 0)
 			throw std::out_of_range("Sparse matrix size should be greater than zero");
 		else {
-			size_t r = 
 			for (size_t r = 0; r < row; r++) {
 				for (size_t c = 0; c < col; c++) {
 					if (m[r][c] != T(0)) { //тип T должен иметь конструктор преобразования типов
@@ -351,101 +372,131 @@ public:
 			}
 		}
 	}
-	size_t rows() { return row; }
-	size_t cols() { return col; }
-	size_t values() { return data.size(); }
-	const T& operator[](size_t r, size_t c) const {
-		int val = data.size();
-		for (size_t i = 0; i < val; i++) {
-			if (rowInd[i] == r) {
-				for (size_t j = i; (j < val && rowInd[j] == r); j++) {
-					if (colInd[i] == c)
-						return data[j];
-				}
-				return 0;
-			}
-		}
-	}
-	const T& at(size_t r, size_t c) const {
-		if (r > row || c > col) throw std::out_of_range("It's impossible to turn to element");
-		int val = data.size();
-		for (size_t i = 0; i < val; i++) {
-			if (rowInd[i] == r) {
-				for (size_t j = i; (j < val && rowInd[j] == r); j++) {
-					if (colInd[i] == c)
-						return data[j];
-				}
-				return 0;
-			}
-		}
-	}
-	void add_element(size_t r, size_t c, const T& value) {
-		if (r > row || c > col) throw std::out_of_range("It's impossible to turn to element");
-		int val = data.size();
-		for (size_t i = 0; i < val; i++) {
-			if (rowInd[i] == r) {
-				size_t j = i
-				for (; (j < val && rowInd[j] == r); j++) {
-					if (colInd[i] == c) {
-						data[j] = value;
-						return;
+	SparseMatrixCoo(const TDynamicMatrix<T>& m, int rows, int cols) : row(rows), col(cols) {
+
+		if (rows < 0 && cols < 0)
+			throw std::out_of_range("Sparse matrix size should be greater than zero");
+		else {
+			for (size_t r = 0; r < row; r++) {
+				for (size_t c = 0; c < col; c++) {
+					if (m[r][c] != T(0)) { //тип T должен иметь конструктор преобразования типов
+						data.push_back(m[r][c]);
+						rowInd.push_back(r);
+						colInd.push_back(c);
 					}
 				}
-				data.push_back(data[val - 1]);
-				for (int u = val - 1; u > j; u++) {
-					data[u] = data[u - 1];
-				}
-				data[j] = value;
-				row.push_back(row[val - 1]);
-				for (int u = val - 1; u > j; u++) {
-					row[u] = row[u - 1];
-				}
-				row[j] = r;
-				col.push_back(col[val - 1]);
-				for (int u = val - 1; u > j; u++) {
-					col[u] = col[u - 1];
-				}
-				col[j] = c;
-				return;
 			}
+		}
+	}
+	size_t rows() { return row; } const
+	size_t cols() { return col; } const
+	size_t values() { return data.size(); } const
+
+	/*
+	* можно было попробовать operator[] с двумя аргументами,
+	* в каком-то новом стандарте это разрешено(?)
+	*/
+	T operator()(size_t r, size_t c) const {
+		int val = data.size();
+		for (size_t i = 0; i < val; i++) {
+			if (rowInd[i] == r) {
+				for (size_t j = i; (j < val && rowInd[j] == r); j++) {
+					if (colInd[j] == c)
+						return data[j];
+				}
+				return T(0);
+			}
+		}
+		return T(0);
+	}
+	//пришлось сделать неконстантным, потому что может вернуться временный объект T(0);
+	T at(size_t r, size_t c) const {
+		if (r >= row || c >= col) throw std::out_of_range("It's impossible to turn to element");
+		int val = data.size();
+		for (size_t i = 0; i < val; i++) {
+			if (rowInd[i] == r) {
+				for (size_t j = i; (j < val && rowInd[j] == r); j++) {
+					if (colInd[j] == c)
+						return data[j];
+				}
+				return T(0);
+			}
+		}
+		return T(0);
+	}
+	void add_element(size_t r, size_t c, const T& value) {
+		if (r >= row || c >= col) throw std::out_of_range("It's impossible to turn to element");
+		size_t val = data.size();
+		if (val != 0) {
+
+			for (size_t i = 0; i < val; i++) {
+				if (rowInd[i] == r) {
+					size_t j = i;
+					for (; (j < val && rowInd[j] == r); j++) {
+						if (colInd[j] == c) {
+							data[j] = value;
+							return;
+						}
+					}
+					data.push_back(data[val - 1]);
+					for (size_t u = val - 1; u > j; u--) {
+						data[u] = data[u - 1];
+					}
+					data[j] = value;
+					rowInd.push_back(rowInd[val - 1]);
+					for (size_t u = val - 1; u > j; u--) {
+						rowInd[u] = rowInd[u - 1];
+					}
+					rowInd[j] = r;
+					colInd.push_back(colInd[val - 1]);
+					for (size_t u = val - 1; u > j; u--) {
+						colInd[u] = colInd[u - 1];
+					}
+					colInd[j] = c;
+					return;
+				}
+			}
+		}
+		else {
+			data.push_back(value);
+			rowInd.push_back(r);
+			colInd.push_back(c);
 		}
 	}
 	SparseMatrixCoo operator+(const SparseMatrixCoo& sm) {
-		TDynamicMatrix<T> resm(std::max(row, col));
-		TDynamicMatrix<T> tmp1(std::max(row, col));
+		TDynamicMatrix<T> tmp1(static_cast<std::max(row, col)>);
 		for (size_t i = 0; i < data.size(); i++) {
 			tmp1[rowInd[i]][colInd[i]] = data[i];
 		}
-		TDynamicMatrix<T> tmp2(std::max(row, col));
+		TDynamicMatrix<T> tmp2(static_cast<std::max(row, col)>);
 		for (size_t i = 0; i < sm.data.size(); i++) {
-			tmp1[sm.rowInd[i]][sm.colInd[i]] = sm.data[i];
+			tmp2[sm.rowInd[i]][sm.colInd[i]] = sm.data[i];
 		}
-		res = tmp1 + tmp2;
-		SparseMatrixCoo<T> res(resm, row, col);
+		SparseMatrixCoo<T> res(tmp1 + tmp2, row, col);
 		return res;
 	}
-	friend std::ostream operator<<(std::ostream& ostr, const SparseMatrixCoo& sm) {
-		int val = data.size();
-		for (int i = 0; i < val; i++) {
-			for (size_t r = 0; r < rowInd[i]; r++) {
-				for (size_t c = 0; c < colInd[i]; c++) {
+	friend std::ostream& operator<<(std::ostream& ostr, const SparseMatrixCoo& sm) {
+		int val = sm.data.size();
+		for (int i = 0; i < sm.val; i++) {
+			for (size_t r = 0; r < sm.rowInd[i]; r++) {
+				for (size_t c = 0; c < sm.colInd[i]; c++) {
 					ostr << T(0) << ' ';
 					if (c == col - 1) ostr << '\n';
 				}
 			}
-			ostr << data[i];
+			ostr << sm.data[i];
 		}
-		return istr;
+		return ostr;
 	}
-	friend std::istream& operator>>(std::istream& istr, const SparseMatrixCoo& sm) {
-		for (size_t r = 0; r < row; r++) {
-			for (size_t c = 0; c < col; c++) {
+	friend std::istream& operator>>(std::istream& istr, SparseMatrixCoo& sm) {
+		for (size_t r = 0; r < sm.row; r++) {
+			for (size_t c = 0; c < sm.col; c++) {
 				T x;
 				istr >> x; //тип T должен иметь operator>>
 				if (x != T(0)) { //тип T должен иметь конструктор преобразования типов
-					data.push_back(x);
-					rowInd.push_back(r);
-					colInd.push_back(c);
+					sm.data.push_back(x);
+					sm.rowInd.push_back(r);
+					sm.colInd.push_back(c);
 				}
 			}
 		}
