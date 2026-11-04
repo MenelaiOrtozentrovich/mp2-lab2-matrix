@@ -26,60 +26,32 @@ TEST(TDynamicMatrix, can_create_copied_matrix)
 
 TEST(TDynamicMatrix, copied_matrix_is_equal_to_source_one)
 {
-	TDynamicMatrix<double> m(10);
-	TDynamicMatrix m2(m);
-	EXPECT_EQ(m, m2);
+  ADD_FAILURE();
 }
 
 TEST(TDynamicMatrix, copied_matrix_has_its_own_memory)
 {
-	//TDynamicMatrix<double> m(10);
-	//TDynamicMatrix m2(m);
-	//m = m + 3.0;
-	//EXPECT_NE(m, m2);
-	ADD_FAILURE();
+  ADD_FAILURE();
 }
 
 TEST(TDynamicMatrix, can_get_size)
 {
-	TDynamicMatrix<double> m(7);
-	size_t sz = m.size();
-	EXPECT_EQ(7, sz);
+  ADD_FAILURE();
 }
 
 TEST(TDynamicMatrix, can_set_and_get_element)
 {
-	TDynamicMatrix<double> m(10);
-	for (int i = 0; i < 10; i++) {
-		m[i] = (double)(i + 1);
-	}
-	TDynamicMatrix<double> m2(10);
-	for (int i = 0; i < 10; i++) {
-		m2.at(i) = (double)(i + 1);
-	}
-	int flag = 0;
-	for (int i = 0; i < 10; i++) {
-		if (m[i] != (double)(i + 1)) flag = 1;
-	}
-	for (int i = 0; i < 10; i++) {
-		if (m.at(i) != (double)(i + 1)) flag = 1;
-	}
-	if (flag)
-		ADD_FAILURE();
-	EXPECT_EQ(m, m2);
+  ADD_FAILURE();
 }
 
 TEST(TDynamicMatrix, throws_when_set_element_with_negative_index)
 {
-	TDynamicMatrix<double> m(10);
-	ASSERT_ANY_THROW(m.at(-1));
-
+  ADD_FAILURE();
 }
 
 TEST(TDynamicMatrix, throws_when_set_element_with_too_large_index)
 {
-	TDynamicMatrix<double> m(10);
-	ASSERT_ANY_THROW(m.at(10));
+  ADD_FAILURE();
 }
 
 TEST(TDynamicMatrix, can_assign_matrix_to_itself)

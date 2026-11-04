@@ -43,7 +43,7 @@ public:
 	TDynamicVector(TDynamicVector&& v) noexcept
 	{
 		pMem = nullptr;
-		std::swap(pMem, v.pMem);
+		swap(pMem, v.pMem);
 	}
 	~TDynamicVector()
 	{
@@ -53,8 +53,8 @@ public:
 	TDynamicVector& operator=(const TDynamicVector& v)
 	{
 		if (this == &v) {
-			TDynamicVector tmp(v);
-			std::swap(*this, tmp);
+		TDynamicVector tmp(v);
+		swap(*this, tmp);
 		}
 		return *this;
 	}
@@ -79,15 +79,15 @@ public:
 	// индексация с контролем
 	T& at(size_t ind)
 	{
-		if (0 <= ind && ind < sz)
-			return pMem[ind];
-		throw std::out_of_range("It's impossible to turn to element");
+		if (!(0 <= ind < sz))
+			throw std::out_of_range("It's impossible to turn to element");
+		return pMem[ind];
 	}
 	const T& at(size_t ind) const
 	{
-		if (0 <= ind && ind < sz)
-			return pMem[ind];
-		throw std::out_of_range("It's impossible to turn to element");
+		if (!(0 <= ind < sz))
+			throw std::out_of_range("It's impossible to turn to element");
+		return pMem[ind];
 	}
 
 	// сравнение
@@ -101,7 +101,7 @@ public:
 	}
 	bool operator!=(const TDynamicVector& v) const noexcept
 	{
-		return !(this->operator==(v));
+		return !(this->operator=(v));
 	}
 
 	// скалярные операции
@@ -112,14 +112,14 @@ public:
 			tmp.pMem[i] = pMem[i] + val;
 		return tmp;
 	}
-	TDynamicVector operator-(T val)
+	TDynamicVector operator-(double val)
 	{
 		TDynamicVector tmp(sz);
 		for (size_t i = 0; i < sz; i++)
 			tmp.pMem[i] = pMem[i] - val;
 		return tmp;
 	}
-	TDynamicVector operator*(T val)
+	TDynamicVector operator*(double val)
 	{
 		TDynamicVector tmp(sz);
 		for (size_t i = 0; i < sz; i++)
@@ -189,26 +189,17 @@ public:
 			pMem[i] = TDynamicVector<T>(sz);
 	}
 
-	size_t size() {
-		return sz;
-	}
-
 	using TDynamicVector<TDynamicVector<T>>::operator[];
-	using TDynamicVector<TDynamicVector<T>>::at;
 
 	// сравнение
 	bool operator==(const TDynamicMatrix& m) const noexcept
 	{
 		if (sz != m.sz) return false;
 		for (size_t i = 0; i < sz; i++)
-			if (pMem[i] != m.pMem[i])
-				return false;
+			for (size_t j = 0; j < sz; j++)
+				if (pMem[i][j] != m.pMem[i][j])
+					return false;
 		return true;
-	}
-
-	bool operator!=(const TDynamicMatrix& m) const noexcept
-	{
-		return !(*this == m);
 	}
 
 	// матрично-скалярные операции
@@ -257,18 +248,18 @@ public:
 	}
 
 	// ввод/вывод
-	//friend std::istream& operator>>(std::istream& istr, TDynamicMatrix& v)
-	//{
-	//	for (size_t i = 0; i < sz; i++)
-	//		istr >> pMem[i];
-	//	return istr;
-	//}
-	//friend std::ostream& operator<<(std::ostream& ostr, const TDynamicMatrix& v)
-	//{
-	//	for (size_t i = 0; i < sz; i++)
-	//		ostr << pMem[i];
-	//	return ostr;
-	//}
+	friend std::istream& operator>>(std::istream& istr, TDynamicMatrix& v)
+	{
+		for (size_t i = 0; i < sz; i++)
+			istr >> pMem[i];
+		return istr;
+	}
+	friend std::ostream& operator<<(std::ostream& ostr, const TDynamicMatrix& v)
+	{
+		for (size_t i = 0; i < sz; i++)
+			ostr << pMem[i];
+		return ostr;
+	}
 };
 
 #endif
