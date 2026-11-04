@@ -15,6 +15,11 @@ set(MP2_TESTS   "test_${PROJECT_NAME}")
 set(MP2_CUSTOM_PROJECT "${PROJECT_NAME}")
 set(MP2_INCLUDES "${PROJECT_SOURCE_DIR}/include")
 
+# Header-only library
+set(MP2_LIBRARY ${MP2_CUSTOM_PROJECT})
+add_library(${MP2_LIBRARY} INTERFACE)
+target_include_directories(${MP2_LIBRARY} INTERFACE "${MP2_INCLUDES}")
+
 add_subdirectory(include)
 add_subdirectory(samples)
 
