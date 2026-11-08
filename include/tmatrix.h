@@ -393,19 +393,7 @@ public:
 		return ostr;
 	}
 
-	//friend TDynamicMatrix(const SparseMatrixCoo<T>& sm);
 };
-
-//template<class T>
-//TDynamicMatrix::TDynamicMatrix(const SparseMatrixCoo<T>& sm) : TDynamicVector<TDynamicVector<T>>(std::max(sm.row, sm.col)) {
-//	size_t row = sm.row, col = sm.col;
-//	;
-//	for (size_t i = 0; i < sz; i++)
-//		pMem[i] = TDynamicVector<T>(sz);
-//	for (size_t i = 0; i < row; i++) {
-//		pMem[sm.rowInd[i]][sm.colInd[i]] = sm.data[i];
-//	}
-//}
 
 template<class T> class SparseMatrixCoo {
 	std::vector<T> data;
@@ -435,7 +423,7 @@ public:
 	SparseMatrixCoo(const TDynamicMatrix<T>& m, int rows, int cols) : 
 		row(static_cast<size_t>(rows)), col(static_cast<size_t>(cols)) {
 
-		if (rows < 0 || cols < 0)
+		if (rows <= 0 || cols <= 0)
 			throw std::out_of_range("Sparse matrix size should be greater than zero");
 		else {
 			for (size_t r = 0; r < row; r++) {
@@ -460,9 +448,9 @@ public:
 	T operator()(int r, int c) const {
 		size_t val = data.size();
 		for (size_t i = 0; i < val; i++) {
-			if (rowInd[i] == r) {
-				for (int j = i; (j < val && rowInd[j] == r); j++) {
-					if (colInd[j] == c)
+			if (rowInd[i] == static_cast<size_t>(r)) {
+				for (size_t j = i; (j < val && rowInd[j] == static_cast<size_t>(r)); j++) {
+					if (colInd[j] == static_cast<size_t>(c))
 						return data[j];
 				}
 				return T(0);
@@ -477,43 +465,41 @@ public:
 		if (static_cast<size_t>(r) >= row || static_cast<size_t>(c) >= col)
 			throw std::out_of_range("It's impossible to turn to element with too large index");
 		else {
-
-			size_t val = data.size();
-			for (size_t i = 0; i < val; i++) {
-				if (rowInd[i] == r) {
-					for (int j = i; (j < val && rowInd[j] == r); j++) {
-						if (colInd[j] == c)
-							return data[j];
-					}
-					return T(0);
-				}
-			}
-			return T(0);
+			return operator()(r, c);
 		}
 	}
-	void add_element(size_t r, size_t c, const T& value) {
-		if (value == T(0)) return;
+	void set_element(size_t r, size_t c, const T& value) {
 		if (r >= row || c >= col)
 			throw std::out_of_range("It's impossible to turn to element");
-
+		
 		size_t val = data.size();
-		// ищем позицию: первый элемент с (rowInd > r) или (rowInd == r && colInd >= c)
 		size_t pos = 0;
 		while (pos < val && (rowInd[pos] < r || (rowInd[pos] == r && colInd[pos] < c)))
 			++pos;
 
-		// если нашли точно такой же — заменяем
+		//заменяем, если найден
 		if (pos < val && rowInd[pos] == r && colInd[pos] == c) {
-			data[pos] = value;
+			if (value == T(0)) {
+				data.erase(data.begin() + pos);
+				rowInd.erase(rowInd.begin() + pos);
+				colInd.erase(colInd.begin() + pos);
+				return;
+			}
+			else {
+				data[pos] = value;
+			}
 			return;
 		}
-
-		// иначе вставляем в позицию pos
+		if (value == T(0)) return;
+		//иначе вставляем в позицию pos
 		data.insert(data.begin() + pos, value);
 		rowInd.insert(rowInd.begin() + pos, r);
 		colInd.insert(colInd.begin() + pos, c);
 	}
-	SparseMatrixCoo operator+(const SparseMatrixCoo& sm) {
+	SparseMatrixCoo operator+(const SparseMatrixCoo& sm) const {
+		if (row != sm.row || col != sm.col)
+			throw std::invalid_argument("Size mismatch during addition");
+
 		TDynamicMatrix<T> tmp1(static_cast<size_t>(std::max(row, col)));
 		for (size_t i = 0; i < data.size(); i++) {
 			tmp1[rowInd[i]][colInd[i]] = data[i];
@@ -522,19 +508,21 @@ public:
 		for (size_t i = 0; i < sm.data.size(); i++) {
 			tmp2[sm.rowInd[i]][sm.colInd[i]] = sm.data[i];
 		}
-		SparseMatrixCoo<T> res(tmp1 + tmp2, row, col);
-		return res;
+		return SparseMatrixCoo<T>(tmp1 + tmp2, static_cast<int>(row), static_cast<int>(col));
 	}
 	friend std::ostream& operator<<(std::ostream& ostr, const SparseMatrixCoo& sm) {
-		size_t val = sm.data.size();
-		for (size_t i = 0; i < val; i++) {
-			for (size_t r = 0; r < sm.rowInd[i]; r++) {
-				for (size_t c = 0; c < sm.colInd[i]; c++) {
+		size_t k = 0;
+		for (size_t r = 0; r < sm.row; r++) {
+			for (size_t c = 0; c < sm.col; c++) {
+				if (k < sm.data.size() && sm.rowInd[k] == r && sm.colInd[k] == c) {
+					ostr << sm.data[k] << ' ';
+					k++;
+				}
+				else {
 					ostr << T(0) << ' ';
-					if (c == sm.col - 1) ostr << '\n';
 				}
 			}
-			ostr << sm.data[i] << ' ';
+			ostr << '\n';
 		}
 		return ostr;
 	}
@@ -542,7 +530,6 @@ public:
 		sm.data.clear();
 		sm.rowInd.clear();
 		sm.colInd.clear();
-		size_t val = sm.data.size();
 		for (size_t r = 0; r < sm.row; r++) {
 			for (size_t c = 0; c < sm.col; c++) {
 				T x;
@@ -555,5 +542,14 @@ public:
 			}
 		}
 		return istr;
+	}
+	bool operator==(const SparseMatrixCoo& sm) const {
+		if (data != sm.data || rowInd != sm.rowInd || colInd != sm.colInd
+			|| row != sm.row || col != sm.col)
+			return false;
+		return true;
+	}
+	bool operator!=(const SparseMatrixCoo& sm) const {
+		return !(*this == sm);
 	}
 };

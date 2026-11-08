@@ -132,6 +132,18 @@ TEST(SparseMatrixCoo, can_add_sparse_matrices)
   EXPECT_EQ(2, res(1, 1));
   EXPECT_EQ(30, res(2, 2));
 }
+TEST(SparseMatrixCoo, comparison) {
+	SparseMatrixCoo<int> sm1(3, 3);
+	sm1.add_element(0, 0, 1);
+	sm1.add_element(1, 1, 2);
+	SparseMatrixCoo<int> sm2(3, 3);
+	sm2.add_element(0, 0, 10);
+	sm2.add_element(2, 2, 30);
+	SparseMatrixCoo<int> sm3 = sm1 + sm2;
+	EXPECT_EQ(sm1, sm2);
+	EXPECT_NE(sm1, sm3);
+	EXPECT_NE(sm2, sm3);
+}
 
 // --- Ввод/вывод ---
 
@@ -198,4 +210,33 @@ TEST(SparseMatrixCoo, rows_and_cols_return_correct_values)
   SparseMatrixCoo<int> sm(10, 20);
   EXPECT_EQ(static_cast<size_t>(10), sm.rows());
   EXPECT_EQ(static_cast<size_t>(20), sm.cols());
+}
+
+// ---Запись/Чтение
+TEST(SparseMatrixCoo, can_write_matrix) {
+	SparseMatrixCoo<int> sm(5, 6);
+	sm.add_element(3, 4, '1');
+	sm.add_element(4, 5, '2');
+	std::string expected =
+		"0 0 0 0 0 0\n0 0 0 0 0 0\n0 0 0 0 0 0\n0 0 0 0 1 0\n0 0 0 0 0 2\n";
+
+	std::stringstream sstr;
+	sstr << sm;
+	EXPECT_EQ(expected, sstr.str());
+
+}
+
+TEST(SparseMatrixCoo, can_read_matrix) {
+	SparseMatrixCoo<int> sm(7, 3);
+	SparseMatrixCoo<int> expected(7, 3);
+	expected.add_element(0, 0, 1);
+	expected.add_element(3, 2, 2);
+
+	std::stringstream sstr;
+	std::string str =
+		"1 0 0\n0 0 0\n0 0 0\n0 0 2\n0 0 0\n0 0 0\n0 0 0\n";
+	sstr << "1 2 3 4 5\n";
+	sstr >> sm;
+
+	EXPECT_EQ(expected, sm);
 }
